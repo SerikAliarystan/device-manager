@@ -1,0 +1,17 @@
+@startuml
+actor Tester
+
+== Release device by Tester ==
+
+Tester -> DeviceController: DELETE api/v1/device/{deviceId}
+activate DeviceController #FFBBBB
+DeviceController -> DeviceService: Try to release device
+DeviceService -> DeviceRepository: findDeviceById
+DeviceService -> DeviceService: update device status to AVAILABLE
+DeviceService -> DeviceRepository: save
+
+deactivate DeviceService
+DeviceController --> Tester: {message: "Device was successfully released."} 200[OK]
+deactivate DeviceController
+@end
+@enduml

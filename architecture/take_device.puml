@@ -1,0 +1,34 @@
+@startuml
+actor Tester
+
+== Take device by Tester ==
+
+Tester -> DeviceController: POST api/v1/device
+activate DeviceController #FFBBBB
+DeviceController -> DeviceService: Try to book device
+DeviceService -> DeviceRepository: findDeviceById
+alt If device was booked
+DeviceService -> OrderService: getActiveOrderByDeviceId
+OrderService -> OrderRepository: findTopByDeviceIdOrderByOrderDateDesc
+DeviceService --> Tester: {message: "Device was already booked by"} \n409 [CONFLICT]
+end
+
+DeviceService -> UserService: getUserById
+UserService -> UserRepository: findById
+DeviceService -> DeviceService: update device status to BOOKED
+DeviceService -> DeviceRepository: save
+DeviceService -> OrderService: saveOrder
+OrderService -> OrderRepository: save
+
+alt when optimistic locking occurs
+DeviceService -> OrderService: getActiveOrderByDeviceId
+OrderService -> OrderRepository: findTopByDeviceIdOrderByOrderDateDesc
+DeviceService --> Tester: {message: "Device was already booked by"} \n409 [CONFLICT]
+end
+
+
+deactivate DeviceService
+DeviceController --> Tester: {message: "Device was successfully returned."} 200[OK]
+deactivate DeviceController
+@end
+@enduml
